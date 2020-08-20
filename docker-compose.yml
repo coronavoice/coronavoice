@@ -1,0 +1,113 @@
+version: "3"
+
+networks:
+  web:
+    external: true
+  database:
+    external: true
+
+volumes:
+  mysql-data:
+  nginx-conf:
+  nginx-vhost:
+  html:
+  certs:
+
+
+services:
+  mysql:
+    image: mysql:5.7.24
+    container_name: mysql
+    networks:
+      - database
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-data:/var/lib/mysql
+    ports:
+      - '3306:3306'
+    restart: always
+    environment:
+        MYSQL_ROOT_USER: root
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - "api"
+      - "app"
+    networks:
+      - web
+    volumes:
+      - "/etc/nginx/vhost.d:/etc/nginx/vhost.d"
+      - "nginx-conf:/etc/nginx/conf.d"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+      - "certs:/etc/nginx/certs:ro"
+      - "html:/usr/share/nginx/html"
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+
+
+  letsencrypt-nginx-proxy-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    restart: always
+    container_name: letsencrypt-nginx-proxy-companion
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "nginx-conf:/etc/nginx/conf.d"
+      - "nginx-vhost:/etc/nginx/vhost.d"
+      - "html:/usr/share/nginx/html"
+      - "certs:/etc/nginx/certs:rw"
+    depends_on:
+      - nginx-proxy
+   
+  api:
+    build: ./api
+    container_name: api
+    restart: always
+    depends_on:
+      - "mysql"
+    ports:
+      - "4000:4000"
+    env_file: api.env
+    networks:
+      - web
+      - database
+    environment:
+      - VIRTUAL_HOST=api.example.com
+      - VIRTUAL_PORT=4000
+
+  app:
+    build: 
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        BASE_URL: ${BASE_URL}
+        VUE_APP_INSTANCE: ${VUE_APP_INSTANCE}
+        VUE_APP_NAME: ${VUE_APP_NAME}
+        VUE_APP_THEME_COLOR: ${VUE_APP_THEME_COLOR}
+        VUE_APP_FB_API_KEY: ${VUE_APP_FB_API_KEY}
+        VUE_APP_FB_AUTH_DOMAIN: ${VUE_APP_FB_AUTH_DOMAIN}
+        VUE_APP_FB_DATABASE_URL: ${VUE_APP_FB_DATABASE_URL}
+        VUE_APP_FB_PROJECT_ID: ${VUE_APP_FB_PROJECT_ID}
+        VUE_APP_FB_STORAGE_BUCKET: ${VUE_APP_FB_STORAGE_BUCKET}
+        VUE_APP_FB_MESSAGING_SENDER_ID: ${VUE_APP_FB_MESSAGING_SENDER_ID}
+        VUE_APP_FB_APP_ID: ${VUE_APP_FB_APP_ID}
+        VUE_APP_S3_BUCKET: ${VUE_APP_S3_BUCKET}
+        VUE_APP_API: ${VUE_APP_API}
+        VUE_APP_FATHOM: ${VUE_APP_FATHOM}
+    container_name: app
+    restart: always
+    networks:
+      - web
+      - database
+    environment:
+      - VIRTUAL_HOST=example.com
+
+
+
