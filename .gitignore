@@ -1,0 +1,7 @@
+.vscode
+.env
+api.env
+.DS_Store
+firebase.json
+acme.json
+
