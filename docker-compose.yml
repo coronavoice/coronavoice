@@ -27,17 +27,17 @@ services:
       - '3306:3306'
     restart: always
     environment:
-        MYSQL_ROOT_USER: root
-        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-        MYSQL_DATABASE: ${MYSQL_DATABASE}
-        MYSQL_USER: ${MYSQL_USER}
-        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      - MYSQL_ROOT_USER=root
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
   nginx-proxy:
     image: jwilder/nginx-proxy
     ports:
-      - "80:80"
-      - "443:443"
+      - 80:80
+      - 443:443
     depends_on:
       - "api"
       - "app"
@@ -45,10 +45,10 @@ services:
       - web
     volumes:
       - "/etc/nginx/vhost.d:/etc/nginx/vhost.d"
-      - "nginx-conf:/etc/nginx/conf.d"
+      - "./nginx-conf:/etc/nginx/conf.d"
       - "/var/run/docker.sock:/tmp/docker.sock:ro"
-      - "certs:/etc/nginx/certs:ro"
-      - "html:/usr/share/nginx/html"
+      - "./certs:/etc/nginx/certs:ro"
+      - "./html:/usr/share/nginx/html"
     labels:
       - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
 
@@ -59,12 +59,14 @@ services:
     container_name: letsencrypt-nginx-proxy-companion
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "nginx-conf:/etc/nginx/conf.d"
-      - "nginx-vhost:/etc/nginx/vhost.d"
-      - "html:/usr/share/nginx/html"
-      - "certs:/etc/nginx/certs:rw"
+      - "./nginx-conf:/etc/nginx/conf.d"
+      - "/etc/nginx/vhost.d:/etc/nginx/vhost.d"
+      - "./html:/usr/share/nginx/html"
+      - "./certs:/etc/nginx/certs:rw"
     depends_on:
       - nginx-proxy
+    environment:
+      - NGINX_PROXY_CONTAINER=nginx-proxy
    
   api:
     build: ./api
@@ -80,6 +82,8 @@ services:
       - database
     environment:
       - VIRTUAL_HOST=api.example.com
+      - LETSENCRYPT_HOST=api.example.dev
+      - LETSENCRYPT_EMAIL=api@example.dev
       - VIRTUAL_PORT=4000
 
   app:
@@ -108,6 +112,8 @@ services:
       - database
     environment:
       - VIRTUAL_HOST=example.com
+      - LETSENCRYPT_HOST=example.dev
+      - LETSENCRYPT_EMAIL=email@example.dev
 
 
 

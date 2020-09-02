@@ -36,12 +36,16 @@ Start by pulling the repository and creating the required .env to store private 
    - `index.js`: change and fill the required data based on the provided example.  
 3. Rename  `example.env` to `.env` and use the example to fill the required data. 
 4. Rename `example.api.env` to `api.env` and use the example to fill the required data. 
-5. Edit the `VIRTUAL_HOST` variables in `docker-compose.yml` to point to the domain you are using instead of domain.tld.
+5. Edit the `VIRTUAL_HOST` , `LETSENCRYPT_HOST` and `LETSENCRYPT_EMAIL` variables in `docker-compose.yml` to point to the domain you are using instead of example.com.
    ``` 
    - VIRTUAL_HOST=example.com 
+   - LETSENCRYPT_HOST=example.dev
+   - LETSENCRYPT_EMAIL=email@example.dev
    ```
    ``` 
    - VIRTUAL_HOST=api.example.com 
+   - LETSENCRYPT_HOST=api.example.dev
+   - LETSENCRYPT_EMAIL=api@example.dev
    ```
 6. Make sure the name of the database in `init.sql` matches the value of `MYSQL_DATABASE` in `.env` file. 
 

@@ -5,3 +5,5 @@ api.env
 firebase.json
 acme.json
 
+certs/
+nginx-conf/
